@@ -1,0 +1,10 @@
+{
+  "name": "webhook-seguro-n8n",
+  "version": "1.0.0",
+  "description": "Webhook de pagamento seguro (HMAC, anti-replay, idempotência) com receptor de referência e fluxo n8n. Dados fictícios.",
+  "scripts": {
+    "test": "node test.js",
+    "receptor": "node src/receiver.js"
+  },
+  "license": "MIT"
+}
