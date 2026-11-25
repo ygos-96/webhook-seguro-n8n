@@ -32,6 +32,9 @@ src/verificar.js   lógica de validação (a mesma do nó Code do n8n)
 src/receiver.js    servidor de referência
 src/simular.js     7 cenários de teste/ataque
 test.js            executa tudo e confere os resultados
+academy_001.json   fluxo n8n para importar (Workflows > Import from file)
 ```
+
+Para usar o fluxo no n8n: importe `academy_001.json` e defina a variável de ambiente `ACADEMY_001_SECRET`. Sem ela o fluxo usa um segredo de demonstração público, então não publique com dados reais.
 
 Veja `ESTUDO.md` para o raciocínio completo e as limitações conhecidas.

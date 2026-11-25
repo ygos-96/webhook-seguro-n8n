@@ -1,0 +1,251 @@
+{
+  "name": "academy_001",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "academy_001",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "5c602c18-7d40-4eba-908a-71e14e9c2b67",
+      "name": "Receber webhook de pagamento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        304
+      ],
+      "webhookId": "11bcea94-0479-49c1-a71b-4b9d0236eab0"
+    },
+    {
+      "parameters": {
+        "jsCode": "const crypto = require('crypto');\nconst reject = (status, reason) => [{ json: { ok: false, status, reason } }];\nconst req = $input.first().json;\nconst headers = req.headers || {};\nconst body = req.body || {};\n\nlet secret = 'segredo-de-demonstracao-trocar';\ntry { if ($env.ACADEMY_001_SECRET) secret = $env.ACADEMY_001_SECRET; } catch (e) {}\n\nconst PRODUTOS = ['curso-demo-001', 'curso-demo-002'];\nconst EMAIL = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\nfor (const campo of ['event_id', 'email', 'product', 'timestamp']) {\n  if (body[campo] === undefined || body[campo] === null || body[campo] === '') return reject(400, 'payload invalido: falta ' + campo);\n}\nif (!EMAIL.test(String(body.email))) return reject(400, 'payload invalido: email');\nif (!PRODUTOS.includes(String(body.product))) return reject(400, 'payload invalido: produto desconhecido');\n\nconst assinatura = String(headers['x-signature'] || '');\nconst canonica = [body.timestamp, body.event_id, body.email, body.product].join('.');\nconst esperada = crypto.createHmac('sha256', secret).update(canonica).digest('hex');\nconst a = Buffer.from(assinatura, 'utf8');\nconst b = Buffer.from(esperada, 'utf8');\nif (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return reject(401, 'assinatura invalida');\n\nconst idade = Math.abs(Date.now() / 1000 - Number(body.timestamp));\nif (!(idade <= 300)) return reject(401, 'timestamp fora da janela de 5 minutos (replay)');\n\nconst store = $getWorkflowStaticData('global');\nstore.vistos = store.vistos || {};\nconst agora = Date.now();\nfor (const k of Object.keys(store.vistos)) { if (agora - store.vistos[k] > 86400000) delete store.vistos[k]; }\nif (store.vistos[body.event_id]) {\n  return [{ json: { ok: true, status: 200, duplicate: true, reason: 'evento ja processado', event_id: body.event_id } }];\n}\nstore.vistos[body.event_id] = agora;\nreturn [{ json: { ok: true, status: 200, duplicate: false, event_id: body.event_id, email: body.email, product: body.product } }];"
+      },
+      "id": "012b4f8a-e7ab-4501-813c-279af2fd30bf",
+      "name": "Validar assinatura, janela e duplicidade",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        544,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.ok }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a25c019c-5026-45ab-a0f2-b784cf35c793",
+      "name": "Requisicao valida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.duplicate }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "rightValue": ""
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "3242b66b-2540-420d-82ec-dd5ec36a2ded",
+      "name": "Evento duplicado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1152,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "fc0f3e93-ea05-4776-9400-a629c1c6229e",
+      "name": "Responder 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1728,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "acesso",
+              "name": "acesso_liberado",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "quando",
+              "name": "liberado_em",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "e182f19a-6a0d-4e0a-8a06-235b91dee8be",
+      "name": "Liberar acesso (simulado)",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "options": {
+          "responseCode": "={{ $json.status }}"
+        }
+      },
+      "id": "367115b7-65ca-4b29-b0ec-7d4826f5dc4e",
+      "name": "Responder erro (400/401)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1152,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## academy_001 · webhook seguro (demo, dados ficticios)\nValida: payload, assinatura HMAC-SHA256 (comparacao em tempo constante), janela de 5 min contra replay e idempotencia por event_id. Segredo vem de ACADEMY_001_SECRET (variavel de ambiente), nunca do fluxo.",
+        "height": 200,
+        "width": 600,
+        "color": 4
+      },
+      "id": "1db6a251-240e-49c1-96a1-db5ff5e9d4e5",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        112,
+        32
+      ]
+    }
+  ],
+  "connections": {
+    "Receber webhook de pagamento": {
+      "main": [
+        [
+          {
+            "node": "Validar assinatura, janela e duplicidade",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar assinatura, janela e duplicidade": {
+      "main": [
+        [
+          {
+            "node": "Requisicao valida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Requisicao valida?": {
+      "main": [
+        [
+          {
+            "node": "Evento duplicado?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder erro (400/401)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evento duplicado?": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Liberar acesso (simulado)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Liberar acesso (simulado)": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
