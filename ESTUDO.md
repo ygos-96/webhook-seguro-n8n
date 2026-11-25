@@ -12,7 +12,7 @@ O problema: **essa URL é pública**. Qualquer pessoa que descobrir o endereço 
 
 | Peça | O que é | Onde |
 | --- | --- | --- |
-| Fluxo n8n `academy_001` | Webhook seguro de 8 nós (não publicado) | n8n.tuzinho.app, ID `gGrvXdKwsulPPjhH` |
+| Fluxo n8n `academy_001` | Webhook seguro de 8 nós (não publicado) | instância própria do n8n (host e ID omitidos) |
 | `src/verificar.js` | A mesma lógica do fluxo, em JS puro, para poder testar | pasta do projeto |
 | `src/receiver.js` | Servidor mínimo que usa a lógica (sem n8n) | pasta do projeto |
 | `src/simular.js` | Dispara 7 cenários: 1 legítimo e 6 ataques/falhas | pasta do projeto |
@@ -72,13 +72,13 @@ Receber webhook ──► Validar (Code) ──► Requisição válida? ──s
 ## 7. Como rodar
 
 ```powershell
-cd C:\Users\telwa\Desktop\Meus\webhook-seguro-n8n
+cd webhook-seguro-n8n
 npm test                      # 7 cenários contra o receptor local
 npm run receptor              # sobe em http://localhost:3001/webhook/academy_001
 node src/simular.js http://localhost:3001/webhook/academy_001
 ```
 
-Para testar o n8n de verdade: defina `ACADEMY_001_SECRET` no servidor, publique o fluxo e rode `node src/simular.js https://n8n.tuzinho.app/webhook/academy_001 <segredo>`.
+Para testar o n8n de verdade: defina `ACADEMY_001_SECRET` no servidor, publique o fluxo e rode `node src/simular.js https://SEU-N8N/webhook/academy_001 <segredo>`.
 
 ## 8. Glossário
 
