@@ -1,5 +1,7 @@
 # Webhook seguro para n8n
 
+[![ci](https://github.com/ygos-96/webhook-seguro-n8n/actions/workflows/ci.yml/badge.svg)](https://github.com/ygos-96/webhook-seguro-n8n/actions/workflows/ci.yml)
+
 Receptor de webhook de pagamento com **assinatura HMAC-SHA256, proteção contra replay, idempotência e validação de entrada**. Inclui fluxo n8n, receptor de referência em Node.js (sem dependências) e um simulador de 7 cenários (1 legítimo, 6 ataques). Todos os dados são fictícios.
 
 ## Por que existe
